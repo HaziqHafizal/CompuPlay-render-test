@@ -23,5 +23,9 @@ class AppServiceProvider extends ServiceProvider
     {
         // Register notification observer
         Notification::observe(NotificationObserver::class);
+
+        if ($this->app->environment('production')) {
+            \Illuminate\Support\Facades\URL::forceScheme('https');
+        }
     }
 }
