@@ -25,6 +25,7 @@ class AppServiceProvider extends ServiceProvider
         Notification::observe(NotificationObserver::class);
 
         if ($this->app->environment('production')) {
+            $this->app['request']->server->set('HTTPS', 'on');
             \Illuminate\Support\Facades\URL::forceScheme('https');
         }
     }
