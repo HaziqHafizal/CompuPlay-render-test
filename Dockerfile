@@ -1,20 +1,6 @@
 FROM php:8.2-apache
 
-# Install dependencies
-RUN apt-get update && apt-get install -y \
-    libpng-dev \
-    libonig-dev \
-    libxml2-dev \
-    libzip-dev \
-    zip \
-    unzip \
-    git \
-    curl
-
-# Clear cache
-RUN apt-get clean && rm -rf /var/lib/apt/lists/*
-
-# Install dependencies (Added libpq-dev for Postgres)
+# 1. Install System Dependencies (Includes Postgres driver libpq-dev)
 RUN apt-get update && apt-get install -y \
     libpng-dev \
     libonig-dev \
@@ -24,30 +10,35 @@ RUN apt-get update && apt-get install -y \
     zip \
     unzip \
     git \
-    curl
+    curl \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Install extensions (Added pdo_pgsql)
+# 2. Install PHP Extensions (Includes pdo_pgsql)
 RUN docker-php-ext-install pdo_mysql pdo_pgsql mbstring exif pcntl bcmath gd zip
 
-# Enable RewriteModule
+# 3. Enable Apache Rewrite
 RUN a2enmod rewrite
 
-# Set working directory
+# 4. Set Working Directory
 WORKDIR /var/www/html
 
-# Copy application files
+# 5. Copy Application Code
 COPY . .
 
-# Install composer
+# 6. Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Set permissions
-RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
+# 7. Install PHP Dependencies (CRITICAL STEP)
+# We force 'log' driver here to prevent the "Pusher Key" build crash
+RUN BROADCAST_CONNECTION=log composer install --no-interaction --prefer-dist --optimize-autoloader --no-dev
 
-# Change document root to public folder
+# 8. Fix Permissions (Give Apache ownership of everything)
+RUN chown -R www-data:www-data /var/www/html
+
+# 9. Configure Apache DocumentRoot
 ENV APACHE_DOCUMENT_ROOT /var/www/html/public
 RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf
 RUN sed -ri -e 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf
 
+# 10. Expose Port
 EXPOSE 80
-
