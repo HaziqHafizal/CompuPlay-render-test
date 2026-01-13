@@ -4,12 +4,6 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Broadcast;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Artisan;
-
-Route::get('/migrate-db-emergency', function () {
-    Artisan::call('migrate', ['--force' => true]);
-    return "Migration output: " . Artisan::output();
-});
 
 // Favicon route
 Route::get('/favicon.ico', function () {
