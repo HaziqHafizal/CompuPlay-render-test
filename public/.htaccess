@@ -4,6 +4,7 @@
     </IfModule>
 
     RewriteEngine On
+    RewriteBase /
 
     # Fix for Render/Heroku SSL termination
     SetEnvIf X-Forwarded-Proto https HTTPS=on
